@@ -57,7 +57,12 @@ any `.txt` file to `.png` and drop it in.
 ## Stack
 
 FastAPI · LangGraph · SQLite · OpenRouter (free-tier models by default) ·
-vanilla HTML/CSS/JS dashboard with Chart.js.
+vanilla HTML/CSS/JS dashboard with Chart.js. The dashboard's visual design —
+machined panels, recessed readouts, glowing LEDs, corner screws, the orbit
+logomark — is a from-scratch reimplementation of the "instrument panel"
+aesthetic from
+[genesis-research-lab](https://github.com/kaone31056789/genesis-research-lab);
+no code was reused, only the design language and layout ideas.
 
 ## Notes
 

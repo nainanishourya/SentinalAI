@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en" data-theme="dark">
+<html lang="en">
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -8,174 +8,195 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
 </head>
 <body>
-<div class="app-shell">
+<main class="app-shell">
 
-  <header class="topbar">
+  <!-- ============================================================ header -->
+  <header class="panel app-header">
     <div class="brand">
-      <span class="brand-mark">◈</span>
-      <div class="brand-text">
-        <span class="brand-name">SentinalAI</span>
-        <span class="brand-sub">Autonomous SOC · Multi-Agent Threat Pipeline</span>
-      </div>
+      <svg width="26" height="26" viewBox="0 0 48 48" fill="none" role="img" aria-label="SentinalAI">
+        <defs>
+          <linearGradient id="mark-grad" x1="0" y1="0" x2="48" y2="48">
+            <stop offset="0%" stop-color="#6fb3ad" />
+            <stop offset="55%" stop-color="#8fae86" />
+            <stop offset="100%" stop-color="#c4705a" />
+          </linearGradient>
+          <filter id="mark-glow" x="-70%" y="-70%" width="240%" height="240%">
+            <feGaussianBlur stdDeviation="1.6" result="b" />
+            <feMerge><feMergeNode in="b" /><feMergeNode in="SourceGraphic" /></feMerge>
+          </filter>
+        </defs>
+        <circle cx="24" cy="24" r="16" stroke="url(#mark-grad)" stroke-width="2.6" stroke-linecap="round" stroke-dasharray="76 24" transform="rotate(-58 24 24)" opacity="0.95">
+          <animateTransform attributeName="transform" type="rotate" from="-58 24 24" to="302 24 24" dur="9s" repeatCount="indefinite" />
+        </circle>
+        <circle cx="24" cy="8" r="2.6" fill="#6fb3ad" />
+        <circle cx="40" cy="24" r="2.6" fill="#8fae86" />
+        <circle cx="24" cy="40" r="2.6" fill="#c4705a" />
+        <circle cx="8" cy="24" r="2.6" fill="#8f8ab8" />
+        <circle cx="24" cy="24" r="5" fill="#e6e0d3" filter="url(#mark-glow)" />
+        <circle cx="24" cy="24" r="8.5" stroke="#e6e0d3" stroke-width="0.9" opacity="0.28" />
+      </svg>
+      <span class="brand-name">SentinalAI</span>
+      <span class="label brand-sub">Autonomous SOC · Multi-Agent Threat Pipeline</span>
     </div>
-    <div class="topbar-right">
-      <div class="ws-indicator" id="ws-indicator">
-        <span class="dot" id="ws-dot"></span>
-        <span id="ws-label">Connecting…</span>
+
+    <div class="status-rail">
+      <div class="status-chip">
+        <span class="led" id="ws-led" data-on="false"></span>
+        <span class="v" id="ws-label">connecting</span>
       </div>
-      <div class="clock" id="clock">--:--:--</div>
+      <div class="status-chip" id="pipeline-analyzing-chip" style="display:none">
+        <span class="analyzing-chip">
+          <span class="spinner"></span>
+          <span class="txt dots">analyzing</span>
+        </span>
+      </div>
+      <div class="status-chip"><span class="k">Reasoning</span><span class="v" id="chip-model">—</span></div>
+      <div class="status-chip"><span class="k">Agents</span><span class="v">10 / 10</span></div>
+      <span class="mono muted" id="clock" style="font-size:10.5px">--:--:--</span>
     </div>
   </header>
 
-  <main class="grid">
+  <!-- ========================================================== controls -->
+  <div class="panel app-controls">
+    <div class="control-field">
+      <span class="label">Attack Scenario</span>
+      <div class="recess"><select id="scenario-select"><option value="">Random attack</option></select></div>
+    </div>
+    <button class="btn" data-variant="primary" id="simulate-btn">Run Attack Simulation</button>
+    <span class="mono muted" style="font-size:10.5px;max-width:34ch">Generates a synthetic attack and runs it live through all 10 agents.</span>
 
-    <!-- KPI ROW -->
-    <section class="kpi-row" aria-label="Key metrics">
-      <div class="stat-tile">
-        <span class="stat-label">Total Incidents</span>
-        <span class="stat-value" id="kpi-total">0</span>
-        <span class="stat-foot muted">All time, this instance</span>
-      </div>
-      <div class="stat-tile">
-        <span class="stat-label">Critical Severity</span>
-        <span class="stat-value" id="kpi-critical" style="color:var(--status-critical)">0</span>
-        <span class="stat-foot muted">Open critical-priority incidents</span>
-      </div>
-      <div class="stat-tile">
-        <span class="stat-label">Avg. Detection Accuracy</span>
-        <span class="stat-value" id="kpi-accuracy">—</span>
-        <span class="stat-foot muted">vs. MITRE ground truth</span>
-      </div>
-      <div class="stat-tile">
-        <span class="stat-label">Avg. Analyst Confidence</span>
-        <span class="stat-value" id="kpi-confidence">—</span>
-        <span class="stat-foot muted">Detection Analyst Agent</span>
-      </div>
-      <div class="stat-tile">
-        <span class="stat-label">Malicious Uploads Blocked</span>
-        <span class="stat-value" id="kpi-uploads">0</span>
-        <span class="stat-foot muted">CYBER-10 file scanner</span>
-      </div>
-      <div class="stat-tile">
-        <span class="stat-label">Agents Online</span>
-        <span class="stat-value" id="kpi-agents">10/10</span>
-        <span class="stat-foot muted">LangGraph workflow nodes</span>
-      </div>
-    </section>
+    <div class="divider-v"></div>
+    <button class="btn" id="latest-report-btn" disabled>View Latest Report</button>
 
-    <!-- CONTROLS -->
-    <section class="controls-row">
-      <div class="control-group">
-        <label for="scenario-select">Attack scenario</label>
-        <select id="scenario-select">
-          <option value="">Random attack</option>
-        </select>
-      </div>
-      <button class="btn btn-primary" id="simulate-btn">
-        <span class="btn-icon">▶</span> Run Attack Simulation
-      </button>
-      <span class="control-hint muted" id="simulate-hint">Generates a synthetic attack and runs it through all 10 agents live.</span>
-    </section>
+    <div class="seg" style="margin-left:auto" id="center-tabs">
+      <button type="button" data-tab="graph" aria-pressed="true">Pipeline</button>
+      <button type="button" data-tab="analytics" aria-pressed="false">Analytics</button>
+      <button type="button" data-tab="incidents" aria-pressed="false">Incidents</button>
+      <button type="button" data-tab="scanner" aria-pressed="false">Upload Scanner</button>
+    </div>
+  </div>
 
-    <!-- AGENT PIPELINE -->
-    <section class="panel pipeline-panel">
-      <div class="panel-head">
-        <h2>Live Agent Pipeline</h2>
-        <span class="panel-sub muted">LangGraph workflow — each node lights up as it executes</span>
-      </div>
-      <div id="pipeline-viz" class="pipeline-viz"></div>
-      <div class="pipeline-meta muted" id="pipeline-status">Idle — waiting for next event.</div>
-    </section>
+  <!-- ============================================================== body -->
+  <div class="app-body">
 
-    <!-- CHARTS -->
-    <section class="charts-grid">
-      <div class="panel chart-panel">
-        <div class="panel-head"><h2>Attack Category Distribution</h2></div>
-        <canvas id="chart-category" height="220"></canvas>
-        <div class="legend" id="legend-category"></div>
-      </div>
-      <div class="panel chart-panel">
-        <div class="panel-head"><h2>Severity Breakdown</h2></div>
-        <canvas id="chart-severity" height="220"></canvas>
-        <div class="legend" id="legend-severity"></div>
-      </div>
-      <div class="panel chart-panel">
-        <div class="panel-head"><h2>Prediction Accuracy Trend</h2></div>
-        <canvas id="chart-accuracy" height="220"></canvas>
-      </div>
-      <div class="panel chart-panel">
-        <div class="panel-head"><h2>MITRE ATT&amp;CK Tactic Frequency</h2></div>
-        <canvas id="chart-mitre" height="220"></canvas>
-      </div>
-    </section>
+    <!-- --------------------------------------------------------- left col -->
+    <div class="col col-left">
+      <section class="panel" style="flex:1">
+        <header><h2 class="label engraved">SOC Status</h2></header>
+        <ol class="phase-list" id="phase-list"></ol>
+      </section>
 
-    <!-- LIVE CONSOLE + FILE SCANNER -->
-    <section class="mid-grid">
-      <div class="panel console-panel">
-        <div class="panel-head">
-          <h2>Live Event Feed</h2>
-          <span class="panel-sub muted">Ambient traffic + agent reasoning trace</span>
+      <section class="panel" style="flex-shrink:0">
+        <header><h2 class="label engraved">Detection Metrics</h2></header>
+        <div class="readout-grid">
+          <div class="readout sm"><div class="label">Incidents</div><div class="value-row"><span class="value" id="kpi-total" style="color:var(--bone)">0</span></div></div>
+          <div class="readout sm"><div class="label">Critical</div><div class="value-row"><span class="value" id="kpi-critical" style="color:var(--sev-critical)">0</span></div></div>
+          <div class="readout sm"><div class="label">Accuracy</div><div class="value-row"><span class="value" id="kpi-accuracy" style="color:var(--sage)">—</span></div></div>
+          <div class="readout sm"><div class="label">Confidence</div><div class="value-row"><span class="value" id="kpi-confidence" style="color:var(--teal)">—</span></div></div>
+          <div class="readout sm"><div class="label">Uploads Blocked</div><div class="value-row"><span class="value" id="kpi-uploads" style="color:var(--terracotta)">0</span></div></div>
+          <div class="readout sm"><div class="label">Session Runs</div><div class="value-row"><span class="value" id="kpi-runs" style="color:var(--iris)">0</span></div></div>
         </div>
-        <div class="console" id="live-console"></div>
-      </div>
+      </section>
+    </div>
 
-      <div class="panel upload-panel">
-        <div class="panel-head">
-          <h2>Malicious File Upload Scanner</h2>
-          <span class="panel-sub muted">CYBER-10 · Magic-byte / MIME verification</span>
+    <!-- ------------------------------------------------------- center col -->
+    <section class="panel col-center" style="min-height:0">
+      <header>
+        <h2 class="label engraved" id="center-title">Live Agent Pipeline</h2>
+        <div class="graph-legend" id="pipeline-legend">
+          <span class="item"><span class="sw" style="background:var(--teal)"></span><span class="lbl">Running</span></span>
+          <span class="item"><span class="sw" style="background:var(--sage)"></span><span class="lbl">Done</span></span>
+          <span class="item"><span class="sw" style="background:var(--bone-faint)"></span><span class="lbl">Pending</span></span>
         </div>
-        <div class="dropzone" id="dropzone">
-          <input type="file" id="upload-input" hidden />
-          <p><strong>Drop a file</strong> or click to select</p>
-          <p class="muted small">Try renaming a .txt file to .png — it will be rejected.</p>
+      </header>
+      <div class="panel-body">
+        <div class="tab-pane" data-pane="graph">
+          <div class="graph-wrap"><div class="graph-track" id="graph-track"></div></div>
         </div>
-        <div id="upload-result" class="upload-result"></div>
-        <div class="upload-history" id="upload-history"></div>
+        <div class="tab-pane" data-pane="analytics" style="display:none">
+          <div class="analytics-grid">
+            <div class="recess chart-card">
+              <span class="label">Attack Category Distribution</span>
+              <canvas id="chart-category" height="170"></canvas>
+              <div class="chart-legend" id="legend-category"></div>
+            </div>
+            <div class="recess chart-card">
+              <span class="label">Severity Breakdown</span>
+              <canvas id="chart-severity" height="170"></canvas>
+              <div class="chart-legend" id="legend-severity"></div>
+            </div>
+            <div class="recess chart-card">
+              <span class="label">Prediction Accuracy Trend</span>
+              <canvas id="chart-accuracy" height="170"></canvas>
+            </div>
+            <div class="recess chart-card">
+              <span class="label">MITRE ATT&amp;CK Tactic Frequency</span>
+              <canvas id="chart-mitre" height="170"></canvas>
+            </div>
+          </div>
+        </div>
+        <div class="tab-pane" data-pane="incidents" style="display:none">
+          <div class="table-wrap">
+            <table class="data-table">
+              <thead><tr><th>ID</th><th>Attack Type</th><th>Category</th><th>Severity</th><th>Accuracy</th><th>Confidence</th><th>Source</th><th>Time</th></tr></thead>
+              <tbody id="incidents-tbody"><tr><td colspan="8" class="empty-row">No incidents yet — run a simulation to begin.</td></tr></tbody>
+            </table>
+          </div>
+        </div>
+        <div class="tab-pane" data-pane="scanner" style="display:none">
+          <div class="scanner-wrap">
+            <span class="label">CYBER-10 · Malicious File Upload Scanner (Magic-Byte / MIME verification)</span>
+            <div class="dropzone" id="dropzone" style="margin-top:10px">
+              <input type="file" id="upload-input" hidden />
+              <p><strong>Drop a file</strong> or click to select</p>
+              <p class="muted" style="font-size:11px">Try renaming a .txt file to .png — it will be rejected.</p>
+            </div>
+            <div id="upload-result"></div>
+            <div class="upload-history" id="upload-history"></div>
+          </div>
+        </div>
       </div>
     </section>
 
-    <!-- INCIDENTS TABLE -->
-    <section class="panel incidents-panel">
-      <div class="panel-head">
-        <h2>Incident Log</h2>
-        <span class="panel-sub muted">Click a row for the full multi-agent report</span>
-      </div>
-      <div class="table-wrap">
-        <table class="incidents-table">
-          <thead>
-            <tr>
-              <th>ID</th>
-              <th>Attack Type</th>
-              <th>Category</th>
-              <th>Severity</th>
-              <th>Accuracy</th>
-              <th>Confidence</th>
-              <th>Source</th>
-              <th>Time</th>
-            </tr>
-          </thead>
-          <tbody id="incidents-tbody">
-            <tr><td colspan="8" class="muted empty-row">No incidents yet — run a simulation to begin.</td></tr>
-          </tbody>
-        </table>
+    <!-- -------------------------------------------------------- right col -->
+    <section class="panel col-right">
+      <header>
+        <h2 class="label engraved" id="right-panel-title">Current Incident</h2>
+        <span class="mono muted" id="right-panel-sub" style="font-size:9.5px"></span>
+      </header>
+      <div class="right-panel-body" id="right-panel-body">
+        <div class="empty-state"><p>No incident yet. Run a simulation, or wait — the SOC investigates on its own every couple of minutes.</p></div>
       </div>
     </section>
+  </div>
 
-  </main>
+  <!-- ======================================================== event log -->
+  <section class="panel" style="height:150px;flex-shrink:0">
+    <header>
+      <h2 class="label engraved">Live Event Stream</h2>
+      <span class="mono muted" id="event-count" style="font-size:9.5px">0 events</span>
+    </header>
+    <div class="event-stream" id="live-console"></div>
+  </section>
 
-  <footer class="footer muted">
-    SentinalAI — multi-agent SOC demo. Agents reason via an LLM over OpenRouter; threat intel is simulated, not a live feed.
-    <a href="https://github.com/nainanishourya/SentinalAI" target="_blank" rel="noopener">GitHub</a>
-  </footer>
-
-</div>
+</main>
 
 <!-- INCIDENT DETAIL MODAL -->
 <div class="modal-backdrop" id="modal-backdrop">
-  <div class="modal" role="dialog" aria-modal="true">
+  <div class="modal">
+    <span class="screw" style="top:8px;left:8px"></span>
+    <span class="screw" style="top:8px;right:8px"></span>
+    <span class="screw" style="bottom:8px;left:8px"></span>
+    <span class="screw" style="bottom:8px;right:8px"></span>
     <div class="modal-head">
-      <h2 id="modal-title">Incident</h2>
-      <button class="btn-icon-only" id="modal-close" aria-label="Close">✕</button>
+      <div>
+        <h2 id="modal-title">Incident</h2>
+        <div class="sub" id="modal-sub"></div>
+      </div>
+      <div style="display:flex;gap:8px;align-items:center">
+        <button class="btn" id="modal-export">Export Report</button>
+        <button class="btn" id="modal-close">Close</button>
+      </div>
     </div>
     <div class="modal-body" id="modal-body"></div>
   </div>

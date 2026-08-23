@@ -50,7 +50,11 @@ app = FastAPI(title="SentinalAI SOC", lifespan=lifespan)
 
 @app.get("/api/health")
 async def health():
-    return {"status": "ok", "llm_configured": bool(config.OPENROUTER_API_KEY)}
+    return {
+        "status": "ok",
+        "llm_configured": bool(config.OPENROUTER_API_KEY),
+        "model": config.OPENROUTER_MODEL,
+    }
 
 
 @app.get("/api/scenarios")

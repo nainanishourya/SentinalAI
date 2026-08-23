@@ -171,16 +171,44 @@ the logs belonging to an actual incident (stored inside its JSON blob).
 
 Single-page, no build step: `frontend/index.html` + `styles.css` + `app.js`,
 served by FastAPI's `StaticFiles` mount. Chart.js (via CDN) renders the four
-numeric charts; everything else (the agent pipeline diagram, badges, the live
+numeric charts; everything else (the agent pipeline graph, badges, the live
 console, the incident detail modal) is hand-built HTML/CSS driven by
-`app.js`. Color usage follows Anthropic's internal dataviz design system:
-attack categories get fixed-order categorical hues (fold to "Other" past 8),
-severity uses the reserved status palette (critical/serious/warning/good) so
-severity is never ambiguous with a regular series color, and the accuracy
-trend line uses the sequential blue. The design is dark-first (a SOC
-control-room look) with light-mode tokens defined via `data-theme="light"` on
-`<html>`, though no theme toggle UI was wired up — only the token structure is
-in place if you want to add one later.
+`app.js`.
+
+**Visual design.** The dashboard was redesigned around the "laboratory
+instrument panel" aesthetic from `github.com/kaone31056789/genesis-research-lab`
+(an unrelated autonomous-research-agent project the user pointed at as a
+reference) — a skeuomorphic dark console: machined panels with brushed-metal
+striations, recessed "readout" displays, glowing indicator LEDs, corner screws
+on modals, a rotating orbit logomark, and a desaturated teal/sage/amber/
+terracotta/iris palette instead of neon alert colors. Fonts are Instrument
+Serif (display headlines), Archivo (UI), and IBM Plex Mono (labels, data,
+monospace figures) — all loaded from Google Fonts. None of that repo's code
+was copied (it's a Next.js/React/@xyflow app; SentinalAI stays vanilla HTML/
+CSS/JS to match the existing FastAPI-served, no-build-step architecture) —
+only the design language and a few structural ideas were reimplemented from
+scratch: a 3-column app shell (left: pipeline status + KPI readouts, center:
+tabbed Pipeline Graph / Analytics / Incidents / Upload Scanner, right: the
+current or selected incident's live-updating summary), a bottom live event
+stream, and a report modal with `Section`/`Readout`/`Badge`-style components
+and a JSON "Export Report" button.
+
+Color usage still follows the dataviz design-system rules: attack categories
+get fixed-order categorical hues (`--cat-1`..`--cat-8`, fold to a neutral
+"other" past 8), severity uses its own reserved four-step palette
+(critical/high/medium/low, distinct from the categorical hues so severity is
+never visually confused with a series color), and badges always pair color
+with a text label. The design is dark-only for now — no light-mode toggle is
+wired up.
+
+**A flexbox gotcha worth remembering**: any `.panel` used as a flex child in a
+constrained-height column (like the left sidebar) needs `min-height: 0`
+(set globally on `.panel`) — without it, a panel refuses to shrink below its
+content's natural height and pushes its siblings out of the visible area
+silently (no visual clipping cue, no error — the content is just below the
+fold of a nested `overflow-y: auto` container, which a full-page screenshot
+also won't reveal). This bit us once during the redesign: the "Detection
+Metrics" panel disappeared entirely until `min-height: 0` was added.
 
 ## REST + WebSocket API surface
 
