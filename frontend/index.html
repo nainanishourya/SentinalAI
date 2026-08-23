@@ -1,0 +1,186 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>SentinalAI — Autonomous SOC</title>
+<link rel="stylesheet" href="/static/styles.css" />
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+</head>
+<body>
+<div class="app-shell">
+
+  <header class="topbar">
+    <div class="brand">
+      <span class="brand-mark">◈</span>
+      <div class="brand-text">
+        <span class="brand-name">SentinalAI</span>
+        <span class="brand-sub">Autonomous SOC · Multi-Agent Threat Pipeline</span>
+      </div>
+    </div>
+    <div class="topbar-right">
+      <div class="ws-indicator" id="ws-indicator">
+        <span class="dot" id="ws-dot"></span>
+        <span id="ws-label">Connecting…</span>
+      </div>
+      <div class="clock" id="clock">--:--:--</div>
+    </div>
+  </header>
+
+  <main class="grid">
+
+    <!-- KPI ROW -->
+    <section class="kpi-row" aria-label="Key metrics">
+      <div class="stat-tile">
+        <span class="stat-label">Total Incidents</span>
+        <span class="stat-value" id="kpi-total">0</span>
+        <span class="stat-foot muted">All time, this instance</span>
+      </div>
+      <div class="stat-tile">
+        <span class="stat-label">Critical Severity</span>
+        <span class="stat-value" id="kpi-critical" style="color:var(--status-critical)">0</span>
+        <span class="stat-foot muted">Open critical-priority incidents</span>
+      </div>
+      <div class="stat-tile">
+        <span class="stat-label">Avg. Detection Accuracy</span>
+        <span class="stat-value" id="kpi-accuracy">—</span>
+        <span class="stat-foot muted">vs. MITRE ground truth</span>
+      </div>
+      <div class="stat-tile">
+        <span class="stat-label">Avg. Analyst Confidence</span>
+        <span class="stat-value" id="kpi-confidence">—</span>
+        <span class="stat-foot muted">Detection Analyst Agent</span>
+      </div>
+      <div class="stat-tile">
+        <span class="stat-label">Malicious Uploads Blocked</span>
+        <span class="stat-value" id="kpi-uploads">0</span>
+        <span class="stat-foot muted">CYBER-10 file scanner</span>
+      </div>
+      <div class="stat-tile">
+        <span class="stat-label">Agents Online</span>
+        <span class="stat-value" id="kpi-agents">10/10</span>
+        <span class="stat-foot muted">LangGraph workflow nodes</span>
+      </div>
+    </section>
+
+    <!-- CONTROLS -->
+    <section class="controls-row">
+      <div class="control-group">
+        <label for="scenario-select">Attack scenario</label>
+        <select id="scenario-select">
+          <option value="">Random attack</option>
+        </select>
+      </div>
+      <button class="btn btn-primary" id="simulate-btn">
+        <span class="btn-icon">▶</span> Run Attack Simulation
+      </button>
+      <span class="control-hint muted" id="simulate-hint">Generates a synthetic attack and runs it through all 10 agents live.</span>
+    </section>
+
+    <!-- AGENT PIPELINE -->
+    <section class="panel pipeline-panel">
+      <div class="panel-head">
+        <h2>Live Agent Pipeline</h2>
+        <span class="panel-sub muted">LangGraph workflow — each node lights up as it executes</span>
+      </div>
+      <div id="pipeline-viz" class="pipeline-viz"></div>
+      <div class="pipeline-meta muted" id="pipeline-status">Idle — waiting for next event.</div>
+    </section>
+
+    <!-- CHARTS -->
+    <section class="charts-grid">
+      <div class="panel chart-panel">
+        <div class="panel-head"><h2>Attack Category Distribution</h2></div>
+        <canvas id="chart-category" height="220"></canvas>
+        <div class="legend" id="legend-category"></div>
+      </div>
+      <div class="panel chart-panel">
+        <div class="panel-head"><h2>Severity Breakdown</h2></div>
+        <canvas id="chart-severity" height="220"></canvas>
+        <div class="legend" id="legend-severity"></div>
+      </div>
+      <div class="panel chart-panel">
+        <div class="panel-head"><h2>Prediction Accuracy Trend</h2></div>
+        <canvas id="chart-accuracy" height="220"></canvas>
+      </div>
+      <div class="panel chart-panel">
+        <div class="panel-head"><h2>MITRE ATT&amp;CK Tactic Frequency</h2></div>
+        <canvas id="chart-mitre" height="220"></canvas>
+      </div>
+    </section>
+
+    <!-- LIVE CONSOLE + FILE SCANNER -->
+    <section class="mid-grid">
+      <div class="panel console-panel">
+        <div class="panel-head">
+          <h2>Live Event Feed</h2>
+          <span class="panel-sub muted">Ambient traffic + agent reasoning trace</span>
+        </div>
+        <div class="console" id="live-console"></div>
+      </div>
+
+      <div class="panel upload-panel">
+        <div class="panel-head">
+          <h2>Malicious File Upload Scanner</h2>
+          <span class="panel-sub muted">CYBER-10 · Magic-byte / MIME verification</span>
+        </div>
+        <div class="dropzone" id="dropzone">
+          <input type="file" id="upload-input" hidden />
+          <p><strong>Drop a file</strong> or click to select</p>
+          <p class="muted small">Try renaming a .txt file to .png — it will be rejected.</p>
+        </div>
+        <div id="upload-result" class="upload-result"></div>
+        <div class="upload-history" id="upload-history"></div>
+      </div>
+    </section>
+
+    <!-- INCIDENTS TABLE -->
+    <section class="panel incidents-panel">
+      <div class="panel-head">
+        <h2>Incident Log</h2>
+        <span class="panel-sub muted">Click a row for the full multi-agent report</span>
+      </div>
+      <div class="table-wrap">
+        <table class="incidents-table">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Attack Type</th>
+              <th>Category</th>
+              <th>Severity</th>
+              <th>Accuracy</th>
+              <th>Confidence</th>
+              <th>Source</th>
+              <th>Time</th>
+            </tr>
+          </thead>
+          <tbody id="incidents-tbody">
+            <tr><td colspan="8" class="muted empty-row">No incidents yet — run a simulation to begin.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+  </main>
+
+  <footer class="footer muted">
+    SentinalAI — multi-agent SOC demo. Agents reason via an LLM over OpenRouter; threat intel is simulated, not a live feed.
+    <a href="https://github.com/nainanishourya/SentinalAI" target="_blank" rel="noopener">GitHub</a>
+  </footer>
+
+</div>
+
+<!-- INCIDENT DETAIL MODAL -->
+<div class="modal-backdrop" id="modal-backdrop">
+  <div class="modal" role="dialog" aria-modal="true">
+    <div class="modal-head">
+      <h2 id="modal-title">Incident</h2>
+      <button class="btn-icon-only" id="modal-close" aria-label="Close">✕</button>
+    </div>
+    <div class="modal-body" id="modal-body"></div>
+  </div>
+</div>
+
+<script src="/static/app.js"></script>
+</body>
+</html>
